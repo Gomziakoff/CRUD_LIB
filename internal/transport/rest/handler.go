@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/Gomziakoff/CRUD_LIB/internal/domain"
 	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -114,23 +115,34 @@ func (h *Handler) getBookByID(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) createBook(w http.ResponseWriter, r *http.Request) {
 	reqBytes, err := io.ReadAll(r.Body)
 	if err != nil {
+		log.WithFields(log.Fields{
+			"handler": "createBook",
+			"problem": "reading request",
+		}).Error(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	var book domain.Book
 	if err = json.Unmarshal(reqBytes, &book); err != nil {
+		log.WithFields(log.Fields{
+			"handler": "createBook",
+			"problem": "unmarshaling request",
+		}).Error(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	err = h.booksService.Create(context.TODO(), book)
 	if err != nil {
-		log.Println("createBook() error:", err)
+		log.WithFields(log.Fields{
+			"handler": "createBook",
+			"problem": "service error",
+		}).Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
+	log.Info(fmt.Sprintf("Created book '%s'", book.Title))
 	w.WriteHeader(http.StatusCreated)
 }
 

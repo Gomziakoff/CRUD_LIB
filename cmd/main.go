@@ -2,9 +2,8 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
-	"time"
+	"os"
 
 	_ "github.com/Gomziakoff/CRUD_LIB/docs"
 	"github.com/Gomziakoff/CRUD_LIB/internal/config"
@@ -12,6 +11,7 @@ import (
 	"github.com/Gomziakoff/CRUD_LIB/internal/service"
 	"github.com/Gomziakoff/CRUD_LIB/internal/transport/rest"
 	"github.com/Gomziakoff/CRUD_LIB/pkg/database"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -19,13 +19,17 @@ const (
 	CONFIG_FILE = "main"
 )
 
+func init() {
+	log.SetFormatter(&log.JSONFormatter{})
+	log.SetOutput(os.Stdout)
+	log.SetLevel(log.InfoLevel)
+}
+
 func main() {
 	cfg, err := config.New(CONFIG_DIR, CONFIG_FILE)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	log.Printf("config: %+v\n", cfg)
 
 	// init db
 	db, err := database.NewPostgresConnection(database.ConnectionInfo{
@@ -50,7 +54,7 @@ func main() {
 		Handler: handler.InitRouter(),
 	}
 
-	log.Println("SERVER STARTED AT", time.Now().Format(time.RFC3339))
+	log.Info("SERVER STARTED AT")
 
 	if err := srv.ListenAndServe(); err != nil {
 		log.Fatal(err)
